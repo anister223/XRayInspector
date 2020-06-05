@@ -1,0 +1,47 @@
+
+
+void temp(){
+	
+	
+	//vec3 rayOrigin = cameraPos;
+	//vec3 rayDirection;
+	
+	//float tx = (float(gl_FragCoord.x) / float(screenWidth)) * 2.0 * aspect - aspect;
+	//float ty = (float(gl_FragCoord.y) / float(screenHeight)) * 2.0 - 1.0;
+	//vec3 u = normalize(vec3(aspect * tx, 1.0 * ty, -1.0));
+	
+	//float tx = (float(gl_FragCoord.x) / float(screenWidth)) * 2.0 - 1.0;
+	//float ty = (float(gl_FragCoord.y) / float(screenHeight)) * 2.0 - 1.0;
+	//vec3 u = normalize(vec3(640 * tx, 380 * ty, cos(35.0) * -380.0));
+	
+	/*
+	pixelNDCx = (gl_FragCoord.x + 0.5) / screenWidth;
+	pixelNDCy = (gl_FragCoord.y + 0.5) / screenHeight;
+	
+	pixelScreenx = 2 * pixelNDCx - 1;
+	pixelScreeny = 2 * pixelNDCy - 1;
+	
+	pixelCamerax = (2 * pixelScreenx - 1) * aspect;
+	pixelCameray = (1 - 2 * pixelScreeny);
+	*/
+	
+	int imageWidth = screenWidth;
+	int imageHeight = screenHeight;
+	
+	float imageAspectRatio = imageWidth / imageHeight; // assuming width > height 
+	float Px = (2 * ((gl_FragCoord.x + 0.5) / imageWidth) - 1) * tan(fov / 2 * M_PI / 180) * imageAspectRatio; 
+	float Py = (1 - 2 * ((gl_FragCoord.y + 0.5) / imageHeight)) * tan(fov / 2 * M_PI / 180); 
+	//Vec3f rayOrigin = Point3(0, 0, 0); 
+	//Matrix44f cameraToWorld; 
+	//cameraToWorld.set(...); // set matrix 
+	//Vec3f rayOriginWorld, rayPWorld; 
+	//cameraToWorld.multVectMatrix(rayOrigin, rayOriginWorld); 
+	//cameraToWorld.multVectMatrix(Vec3f(Px, Py, -1), rayPWorld); 
+	//Vec3f rayDirection = rayPWorld - rayOriginWorld; 
+	//rayDirection.normalize(); // it's a direction so don't forget to normalize 
+	vec3 u = vec3(Px, Py, -1.0);
+	rayDirection = Object(u) - rayOrigin;
+	
+	//vec3 u = vec3(gl_FragCoord.x - screenWidth/2, gl_FragCoord.y - screenHeight/2, -1.0); // присвоение и центрирование
+	rayDirection = normalize(rayDirection); //Object(u) - rayOrigin);
+}

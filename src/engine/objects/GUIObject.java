@@ -19,7 +19,8 @@ import org.lwjgl.system.MemoryUtil;
  *
  * @author Timur
  */
-public class GUIElement {
+public class GUIObject {
+    /*
     private Vertex[] vertices;
     private int[] indices;
     private Material material;
@@ -136,5 +137,5 @@ public class GUIElement {
     public Material getMaterial(){
         return material;
     }
-    
+    */
 }

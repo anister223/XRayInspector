@@ -10,24 +10,21 @@ layout(std430, binding = 0) buffer ColorSSBO {
 uniform mat4 view;
 uniform mat4 projection;
 
+uniform int dataWidth;
+uniform int dataHeight;
+uniform int dataAmount;
+
 uniform int screenWidth;
 uniform int screenHeight;
-
 uniform vec3 aabb1;
 uniform vec3 aabb2;
-
-uniform int dcmsAmount;
-uniform int width;
-uniform int height;
-
-uniform int normalizationFactor;
-
 //uniform float fov;
-
-uniform vec3 cameraPos;
+//uniform vec3 cameraPos;
 //uniform vec3 cameraVec;
-
 uniform int sampleResolution;
+
+uniform float brightness;
+uniform float treshold;
 
 void Swap(inout float a, inout float b){
 	float temp = a;
@@ -125,7 +122,7 @@ vec3 Data(vec3 v) {
 	//To data space
 	vec3 result;
 
-	vec3 resolution = vec3(width, height, dcmsAmount);
+	vec3 resolution = vec3(dataWidth, dataHeight, dataAmount);
 	vec3 offset = vec3(aabb2.x, aabb2.y, aabb2.z);
 	
 	result = (v + offset) * resolution;
@@ -165,14 +162,14 @@ float Sample(vec3 c){
 		z1 = int(c.z) + 1;
 	}
 	
-	int c000 = color[x0 + y0 * width + z0 * width * height];
-	int c001 = color[x0 + y0 * width + z1 * width * height];
-	int c010 = color[x0 + y1 * width + z0 * width * height];
-	int c011 = color[x0 + y1 * width + z1 * width * height];
-	int c100 = color[x1 + y0 * width + z0 * width * height];
-	int c101 = color[x1 + y0 * width + z1 * width * height];
-	int c110 = color[x1 + y1 * width + z0 * width * height];
-	int c111 = color[x1 + y1 * width + z1 * width * height];
+	int c000 = color[x0 + y0 * dataWidth + z0 * dataWidth * dataHeight];
+	int c001 = color[x0 + y0 * dataWidth + z1 * dataWidth * dataHeight];
+	int c010 = color[x0 + y1 * dataWidth + z0 * dataWidth * dataHeight];
+	int c011 = color[x0 + y1 * dataWidth + z1 * dataWidth * dataHeight];
+	int c100 = color[x1 + y0 * dataWidth + z0 * dataWidth * dataHeight];
+	int c101 = color[x1 + y0 * dataWidth + z1 * dataWidth * dataHeight];
+	int c110 = color[x1 + y1 * dataWidth + z0 * dataWidth * dataHeight];
+	int c111 = color[x1 + y1 * dataWidth + z1 * dataWidth * dataHeight];
 	
 	float c00 = c000 * (1 - xd) + c100 * xd;
 	float c01 = c001 * (1 - xd) + c101 * xd;
@@ -182,9 +179,13 @@ float Sample(vec3 c){
 	float c0 = c00 * (1 - yd) + c10 * yd;
 	float c1 = c01 * (1 - yd) + c11 * yd;
 	
-	result = (c0 * (1 - zd) + c1 * zd) / sampleResolution / normalizationFactor;
+	result = (c0 * (1 - zd) + c1 * zd);
 	
 	return result;
+}
+
+vec3 lerp(vec3 b, vec3 a, float x){
+	return vec3(a.x * x + b.x * (1 - x), a.y * x + b.y * (1 - x), a.z * x + b.z * (1 - x));
 }
 
 void main() {
@@ -196,8 +197,11 @@ void main() {
 	vec3 rayDirection = normalize(Object(vec3(tx, ty, -1.0)) - rayOrigin);
 	
 	vec3 modulation = rayDirection / sampleResolution;
+	int correction = int(1.0 / screenWidth / modulation);	//voxel size divided by modulation = correction value
+	if(correction == 0) correction = 1;
 	
 	vec3 C = vec3(1, 1, 1);
+	vec3 target = vec3(1, 0, 0);
 	float Alpha = 0;
 	
 	vec3 x1 = First(rayOrigin, rayDirection, aabb);
@@ -212,15 +216,21 @@ void main() {
 	while (Image(x).z > Image(x2).z) {
 		// If sample opacity > 0,
 		// then resample color and composite into ray
-		Alpha += Sample(Data(x));// Проба
-		
+		float a = Sample(Data(x));// Проба
+		a = a / 255.0; // / correction;
+		if(a > treshold){
+			C = lerp(C, target, a);
+		}
+		Alpha += a * brightness;
 		if(Alpha >= 1) break;
+		
+		x += modulation; // Прирощение координаты пробы
+		
 		//if (Alpha > 0){
 		//	C = Sample(dataSet, x);
 		//	c = c + C(1 - alpha);
 		//	alpha = alpha + Alpha(U)(1 - alpha);
 		//}
-		x += modulation; // Прирощение координаты пробы
 	}
 	gl_FragColor = vec4(C, Alpha);
 }

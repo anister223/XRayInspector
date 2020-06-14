@@ -17,6 +17,8 @@ public class Camera {
     private Vector3f position, rotation;
     private float moveSpeed = 0.04f, mouseSensitivity = 0.2275f, distance = 2.0f, horizontalAngle = 0, verticalAngle = 0;
     private double oldMouseX = 0, oldMouseY = 0, newMouseX, newMouseY;
+    
+    public boolean isModified = false;
 
     public Camera(Vector3f position, Vector3f rotation) {
         this.position = position;
@@ -50,16 +52,19 @@ public class Camera {
         oldMouseY = newMouseY;
     }
     
-    public void update(GameObject object){
+    public void update(MeshObject object){
         newMouseX = Input.getMouseX();
         newMouseY = Input.getMouseY();
         
         float dx = (float) (newMouseX - oldMouseX);
         float dy = (float) (newMouseY - oldMouseY);
         
-        if(Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_LEFT)){
+        if(Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_MIDDLE)){
+            isModified = true;
             verticalAngle -= dy * mouseSensitivity;
             horizontalAngle += dx * mouseSensitivity;
+        } else{
+            isModified = false;
         }
         /*
         if(Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_MIDDLE)){

@@ -6,18 +6,21 @@
 package xrayinspector;
 
 import engine.graphics.*;
+import static engine.io.ImageLoader.createRasterFromDICOMFile;
 import engine.io.Input;
-import engine.io.ModelLoader;
-import static engine.io.ImageLoader.createBufferedImgFromDICOMFile;
 import engine.io.Window;
 import engine.math.*;
 import engine.objects.Camera;
-import engine.objects.GameObject;
-import java.awt.image.BufferedImage;
+import engine.objects.MeshObject;
+import engine.objects.gui.*;
+import engine.objects.gui.constraint.*;
+import java.awt.image.Raster;
 import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
+import java.text.DecimalFormat;
+import java.util.stream.IntStream;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JProgressBar;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.lwjgl.glfw.GLFW;
 
@@ -27,15 +30,30 @@ import org.lwjgl.glfw.GLFW;
  */
 
 public class Main implements Runnable {
-    public Thread game;
+    public Thread mainThread;
     public Window window;
+    public Camera camera = new Camera(new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f));
     public Renderer renderer;
-    public Shader shader;
-    public final int WIDTH = 1280, HEIGHT = 760;
-    public long time;
+    public Shader shader, guiShader;
+    public final int WIDTH = 1280, HEIGHT = 720;
     
-    //public File f = new File("E:\\XRAYshots\\1\\CPTAC-LSCC\\C3L-01000\\06-09-2011-MSKT organov grudnoy k-18628\\3.000000-LUNG 1.25mm-28122\\1-001.dcm");
-    //public BufferedImage ttt = createBufferedImgFromDICOMFile(f);
+    //GUI
+    public Layout layout;
+    private UIBlock block;
+    private UITextField textField;
+    private UIButton buttonOpenFiles;
+    private UIButton button;
+    private UISlider slider;
+    private UISlider sliderBrightness;
+    private UICheckBox checkBox;
+    
+    //Data
+    private File[] files;
+    private Raster[] DCMrasters;
+    int[][] colors;
+    
+    private float brightness;
+    private float treshold;
     
     //public Mesh[] model = ModelLoader.loadModel("resources/models/cube.obj", "/textures/1-001.png");
     
@@ -101,99 +119,251 @@ public class Main implements Runnable {
         20, 22, 23
     });//, new Material("/textures/1-001.png"));
     
-    public GameObject object = new GameObject(new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(1.0f, 1.0f, 1.0f), mesh);
-    
-    public Camera camera = new Camera(new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f));
+    public MeshObject object = new MeshObject(new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(1.0f, 1.0f, 1.0f), mesh);
     
     public void start() {
-        game = new Thread(this, "game");
-        game.start();
+        mainThread = new Thread(this, "mainThread");
+        mainThread.start();
     }
     
     public void init(){
-        System.out.println("Inititalizing Game!");
-        window = new Window(WIDTH, HEIGHT, "Viewport");
-        //shader = new Shader("/shaders/mainVertex.glsl", "/shaders/SSBOTestFragment.glsl");
+        System.out.println("Inititalizing!");
+        window = new Window(WIDTH, HEIGHT, "XRayInspector");
         shader = new Shader("/shaders/mainVertex.glsl", "/shaders/rayCastingVolumeFragment.glsl");
-        //shader = new Shader("/shaders/mainVertex.glsl", "/shaders/mainFragment.glsl");
+        guiShader = new Shader("/shaders/guiVertexShader.txt", "/shaders/guiFragmentShader.txt");
+        renderer = new Renderer(window, shader, guiShader);
         
-        //
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setMultiSelectionEnabled(true);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("dcm", "jpg", "png", "jpeg", "gif", "dcm");
-        fileChooser.setFileFilter(filter);
-        int selected = fileChooser.showOpenDialog(null);
-        File[] files;
-
-        if(selected == JFileChooser.APPROVE_OPTION){
-            files = fileChooser.getSelectedFiles();
-            renderer = new Renderer(window, shader, files);
-        }
-        //
-        
-        //renderer = new Renderer(window, shader);
-        //window.setBackgroundColor(0.669327f, 0.544758f, 0.494243f);
-        window.setBackgroundColor(0.25f, 0.25f, 0.25f);
+        window.setBackgroundColor(0.0f, 0.0f, 0.0f);
         window.create();
         mesh.create();
         shader.create();
-        time = System.currentTimeMillis();
+        guiShader.create();
+        
+        // Начало объявления данных
+        layout = new Layout(window);
+        
+        block = new UIBlock(Color3f.SOARING_EAGLE);
+        UIConstraints constraints5 = new UIConstraints();
+        constraints5.setX(new PixelConstraint(50, Constraint.BORDER_RIGHT));
+        constraints5.setY(new CenterConstraint());
+        constraints5.setWidth(new RelativeConstraint(0.225f));
+        constraints5.setHeight(new RelativeConstraint(0.9f));
+        layout.Add(block, constraints5);
+        
+        button = new UIButton(105, 32, Color3f.WHITE);
+        UIConstraints constraints = new UIConstraints();
+        constraints.setX(new PixelConstraint(50, Constraint.BORDER_RIGHT));
+        constraints.setY(new PixelConstraint(225, Constraint.BORDER_TOP));
+        constraints.setWidth(new RelativeConstraint(0.1f));
+        constraints.setHeight(new RelativeConstraint(0.1f));
+        layout.Add(button, constraints);
+        
+        slider = new UISlider();
+        UIConstraints constraints2 = new UIConstraints();
+        constraints2.setX(new RelativeConstraint(0.875f));
+        constraints2.setY(new PixelConstraint(150, Constraint.BORDER_TOP));
+        constraints2.setWidth(new RelativeConstraint(0.175f));
+        constraints2.setHeight(new RelativeConstraint(0.01f));
+        layout.Add(slider, constraints2);
+        
+        sliderBrightness = new UISlider();
+        UIConstraints constraints7 = new UIConstraints();
+        constraints7.setX(new RelativeConstraint(0.875f));
+        constraints7.setY(new PixelConstraint(100, Constraint.BORDER_TOP));
+        constraints7.setWidth(new RelativeConstraint(0.175f));
+        constraints7.setHeight(new RelativeConstraint(0.01f));
+        layout.Add(sliderBrightness, constraints7);
+        
+        textField = new UITextField(105, 32, "");
+        UIConstraints constraints3 = new UIConstraints();
+        constraints3.setX(new PixelConstraint(175, Constraint.BORDER_RIGHT));
+        constraints3.setY(new PixelConstraint(275, Constraint.BORDER_TOP));
+        constraints3.setWidth(new RelativeConstraint(0.05f));
+        constraints3.setHeight(new RelativeConstraint(0.05f));
+        layout.Add(textField, constraints3);
+        
+        checkBox = new UICheckBox();
+        UIConstraints constraints4 = new UIConstraints();
+        constraints4.setX(new PixelConstraint(50, Constraint.BORDER_RIGHT));
+        constraints4.setY(new PixelConstraint(100, Constraint.BORDER_BOTTOM));
+        constraints4.setWidth(new RelativeConstraint(0.05f));
+        constraints4.setHeight(new RelativeConstraint(0.05f));
+        //layout.Add(checkBox, constraints4);
+        
+        buttonOpenFiles = new UIButton(105, 32, Color3f.WHITE);
+        UIConstraints constraints6 = new UIConstraints();
+        constraints6.setX(new PixelConstraint(50, Constraint.BORDER_RIGHT));
+        constraints6.setY(new PixelConstraint(150, Constraint.BORDER_BOTTOM));
+        constraints6.setWidth(new RelativeConstraint(0.1f));
+        constraints6.setHeight(new RelativeConstraint(0.1f));
+        layout.Add(buttonOpenFiles, constraints6);
+        // Конец объявления данных
+        
+        layout.create();
+        
+        button.setText("Volume");
+        button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                uiButtonActionPerformed(evt);
+            }
+        });
+        
+        buttonOpenFiles.setText("Browse");
+        buttonOpenFiles.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                uiButtonOpenFilesActionPerformed(evt);
+            }
+        });
+        
+        slider.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                uiSliderActionPerformed(evt);
+            }
+        });
+        
+        sliderBrightness.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                uiSliderBrightnessActionPerformed(evt);
+            }
+        });
     }
     
+    @Override
     public void run(){
         init();
         while (!window.shouldClose()){
             update();
             render();
             if (Input.isKeyDown(GLFW.GLFW_KEY_ESCAPE)) return;
-            if (Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_LEFT)) window.mouseState(true);
-            if (Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_RIGHT)) window.mouseState(false);
-            
-            //Открытие файлов
-            if (Input.isKeyDown(GLFW.GLFW_KEY_O)){
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setMultiSelectionEnabled(true);
-                FileNameExtensionFilter filter = new FileNameExtensionFilter("dcm", "jpg", "png", "jpeg", "gif");
-                fileChooser.setFileFilter(filter);
-                int selected = fileChooser.showOpenDialog(null);
-
-                if(selected == JFileChooser.APPROVE_OPTION){
-                    File file = fileChooser.getSelectedFile();
-                    //String getselectedImage = file.getAbsolutePath();
-                    //JOptionPane.showMessageDialog(null, getselectedImage);
-
-                    try{
-                        BufferedImage img = ImageIO.read(file);
-
-                    }catch(IOException e){
-                        System.err.println(e.toString());
-                    }
-                }
-            }
+            //if (Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_LEFT)) window.mouseState(true);
+            //if (Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_RIGHT)) window.mouseState(false);
         }
         close();
     }
     
     private void update(){
-        //System.out.println("Updating Game!");
         window.update();
+        renderer.update();
         camera.update(object);
-        //if (Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_LEFT)) System.out.println("X: " + Input.getScrollX() + ", Y:" + Input.getScrollY());
+        layout.update();
+        Input.buttonsUpRefresh();
     }
     
     private void render(){
-        //System.out.println("Rendering Game!");
         renderer.renderMesh(object, camera);
+        //renderer.renderGui(layout);
+        layout.render(renderer);
         window.swapBuffers();
     }
     
     private void close(){
         window.destroy();
         mesh.destroy();
+        layout.destroy();
         shader.destroy();
+        guiShader.destroy();
+    }
+    
+    private void uiButtonActionPerformed(java.awt.event.ActionEvent evt){
+        DecimalFormat decimalFormat = new DecimalFormat("#0.000");
+        String numberAsString = decimalFormat.format(volume());
+        this.textField.setText("Volume is: " + numberAsString);
+    }
+    
+    private void uiButtonOpenFilesActionPerformed(java.awt.event.ActionEvent evt){
+        if (loadFiles() == 0) {
+            renderer.loadSSBO(colors);
+        }
+    }
+    
+    private void uiSliderActionPerformed(java.awt.event.ActionEvent evt){
+        this.treshold = slider.getValue();
+        renderer.setTreshold(this.treshold);
+    }
+    
+    private void uiSliderBrightnessActionPerformed(java.awt.event.ActionEvent evt){
+        this.brightness = sliderBrightness.getValue();
+        renderer.setBrightness(this.brightness);
     }
     
     public static void main(String[] args){
         new Main().start();
+    }
+    
+    public int loadFiles(){
+        JFileChooser fileChooser = new JFileChooser("C:\\dicom files");
+        fileChooser.setMultiSelectionEnabled(true);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("dcm", "jpg", "png", "jpeg", "gif", "dcm");
+        fileChooser.setFileFilter(filter);
+        int selected = fileChooser.showOpenDialog(null);
+        
+        files = null;
+        if(selected == JFileChooser.APPROVE_OPTION){
+            files = fileChooser.getSelectedFiles();
+        } else if (selected == JFileChooser.CANCEL_OPTION) {
+            return -1;
+        }
+        
+        JProgressBar pbar;
+        // initialize Progress Bar
+        pbar = new JProgressBar();
+        pbar.setMinimum(0);
+        pbar.setMaximum(files.length);
+        // add to JPanel
+        //add(pbar);
+        
+        JFrame frame = new JFrame("Progress Bar Example");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setContentPane(pbar);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        
+        DCMrasters = new Raster[files.length];
+        for (int i = 0; i < files.length; i++) {
+            DCMrasters[i] = createRasterFromDICOMFile(files[i]);
+            pbar.setValue(i);
+        }
+        frame.setVisible(false);
+        frame.dispose();
+        
+        int size = DCMrasters[0].getWidth() * DCMrasters[0].getHeight();
+        colors = new int[files.length][size];  //Использовать байты??
+        for (int i = 0; i < files.length; i++) {
+            //if (size != DCMrasters[i].getWidth() * DCMrasters[i].getHeight()) throw new Exception("Изображения имеют разный размер!");  //!!!
+            DCMrasters[i].getPixels(0, 0, DCMrasters[i].getWidth(), DCMrasters[i].getHeight(), colors[i]);
+        }
+        
+        renderer.setDataWidth(DCMrasters[0].getWidth());
+        renderer.setDataHeight(DCMrasters[0].getHeight());
+        renderer.setDataAmount(DCMrasters.length);
+        
+        return 0;
+    }
+    
+    public float volume(){
+        int temp = (int)(treshold * 255);
+        if (DCMrasters != null) {
+            float volume = 
+            IntStream.range(0, DCMrasters.length)
+            .parallel()
+            .mapToLong(r -> IntStream.range(0, DCMrasters[r].getHeight())
+                    .parallel()
+                    .mapToLong(y -> IntStream.range(0, DCMrasters[r].getWidth())
+                            .parallel()
+                            .filter(x -> DCMrasters[r].getSample(x, y, 0) >= temp)
+                            .count())
+                    .sum())
+            .sum();
+            
+            volume /= DCMrasters.length * DCMrasters[0].getHeight() * DCMrasters[0].getWidth();
+            
+            return volume;
+        }
+        return 0;
     }
 }

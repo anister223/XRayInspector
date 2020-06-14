@@ -89,6 +89,7 @@ public class Window {
     public void update(){
         if(isResized){
             GL11.glViewport(0,0, width, height);
+            projection = Matrix4f.orthoProjection((float)width / (float) height, 0.1f, 3.5f);
             isResized = false;
         }
         //GL11.glViewport(0, 0, width, height);
@@ -111,6 +112,10 @@ public class Window {
     
     public boolean shouldClose(){
         return GLFW.glfwWindowShouldClose(window);
+    }
+    
+    public boolean isResized(){
+        return isResized;
     }
     
     public void destroy(){

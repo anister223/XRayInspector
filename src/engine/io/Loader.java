@@ -23,14 +23,14 @@ public class Loader {
     
     private ArrayList<Integer> vaos = new ArrayList<Integer>();
     private ArrayList<Integer> vbos = new ArrayList<Integer>();
-    
+    /*
     public RawModel loadToVAO(float[] positions){
         int vaoID = createVAO();
         storeDataInAttribbuteList(0, positions);
         unbindVAO();
         return new RawModel(vaoID, positions.length / 3);
     }
-    
+    */
     public void cleanUp(){
         for (int vao:vaos) {
             GL30.glDeleteVertexArrays(vao);

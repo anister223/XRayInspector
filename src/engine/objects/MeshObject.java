@@ -12,11 +12,11 @@ import engine.math.Vector3f;
  *
  * @author Timur
  */
-public class GameObject {
+public class MeshObject {
     private Vector3f position, rotation, scale;
     private Mesh mesh;
 
-    public GameObject(Vector3f position, Vector3f rotation, Vector3f scale, Mesh mesh) {
+    public MeshObject(Vector3f position, Vector3f rotation, Vector3f scale, Mesh mesh) {
         this.position = position;
         this.rotation = rotation;
         this.scale = scale;
@@ -25,6 +25,22 @@ public class GameObject {
 
     public void update(){
         
+    }
+
+    public void setPosition(Vector3f position) {
+        this.position = position;
+    }
+
+    public void setRotation(Vector3f rotation) {
+        this.rotation = rotation;
+    }
+    
+    public void setScale(Vector3f value){
+        this.scale = value;
+    }
+
+    public void setMesh(Mesh mesh) {
+        this.mesh = mesh;
     }
     
     public Vector3f getPosition() {
@@ -42,6 +58,4 @@ public class GameObject {
     public Mesh getMesh() {
         return mesh;
     }
-    
-    
 }

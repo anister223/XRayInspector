@@ -40,6 +40,13 @@ public class Vertex {
         this.color = new Vector3f(1.0f, 1.0f, 1.0f);
         this.textureCoord = textureCoord;
     }
+    
+    public Vertex(Vector3f position){
+        this.position = position;
+        this.normal = new Vector3f(1.0f, 1.0f, 1.0f);;
+        this.color = new Vector3f(1.0f, 1.0f, 1.0f);
+        this.textureCoord = new Vector2f(1.0f, 1.0f);
+    }
 
     public Vector3f getPosition() {
         return position;

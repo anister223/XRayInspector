@@ -16,11 +16,14 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import org.dcm4che3.data.Attributes;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
+import org.dcm4che3.io.DicomInputStream;
 
 /**
  *
@@ -79,19 +82,19 @@ public class ImageLoader {
         
         // Open the DICOM file and get its pixel data
         try{
-            Iterator iter = ImageIO.getImageReadersByFormatName("DICOM");
-            ImageReader reader = (ImageReader) iter.next();
+            //Iterator iter = ImageIO.getImageReadersByFormatName("DICOM");
+            ImageReader reader = ImageIO.getImageReadersByFormatName("DICOM").next();//(ImageReader) iter.next();
             DicomImageReadParam param = (DicomImageReadParam) reader.getDefaultReadParam();
             ImageInputStream iis = ImageIO.createImageInputStream(dicomFile);
-            reader.setInput(iis, false);
+            reader.setInput(iis);//, false);
             // Returns a new Raster (rectangular array of pixels) containing the raw pixel data from the image stream
-            raster = reader.readRaster(0, param);
+            raster = reader.read(0, param).getRaster();
+            
             if(raster == null)
                 System.out.println("Error: couldn't read Dicom image!");
             iis.close();
-            
         } catch(Exception e){
-            System.out.println("Error: couldn't read dicom image! " + e.getMessage());
+            System.out.println("Error: couldn't read dicom image! \n" + e.getMessage());
             e.printStackTrace();
         }
 

@@ -21,7 +21,7 @@ public class Mesh {
     private Vertex[] vertices;
     private int[] indices;
     private Material material;
-    private int vao, pbo, ibo, cbo, tbo; //Vertex Array Object, Position/Indices Buffer Object
+    private int vao, pbo, ibo, cbo, tbo; //Vertex Array Object, Position/Indices/Color/Texture Buffer Object
     
     public Mesh(Vertex[] vertices, int[] indices, Material material){
         this.vertices = vertices;
@@ -32,6 +32,7 @@ public class Mesh {
     public Mesh(Vertex[] vertices, int[] indices){
         this.vertices = vertices;
         this.indices = indices;
+        this.material = null;
     }
     
     public void create(){

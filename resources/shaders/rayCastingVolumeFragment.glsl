@@ -188,6 +188,27 @@ vec3 lerp(vec3 b, vec3 a, float x){
 	return vec3(a.x * x + b.x * (1 - x), a.y * x + b.y * (1 - x), a.z * x + b.z * (1 - x));
 }
 
+vec3 colorRamp(float x){
+	float s1 = 0.0;
+	float s2 = 0.223;
+	float s3 = 1.0;
+	
+	vec3 color1 = vec3(1.0, 0.786, 0.386);
+	vec3 color2 = vec3(0.922, 0.0, 0.004);
+	vec3 color3 = vec3(0.844, 0.782, 0.745);
+	
+	if(x < s2){
+		x = x / s2;
+		return lerp(color1, color2, x);
+	} else{
+		x = x - s2;
+		float t = s3 - s2;
+		x = x / t;
+		return lerp(color2, color3, x);
+	}
+	
+}
+
 void main() {
 	vec3[] aabb = vec3[2](aabb1, aabb2);
 
@@ -200,7 +221,8 @@ void main() {
 	int correction = int(1.0 / screenWidth / modulation);	//voxel size divided by modulation = correction value
 	if(correction == 0) correction = 1;
 	
-	vec3 C = vec3(1, 1, 1);
+	vec3 C = vec3(1.0, 0.786, 0.386);
+	
 	vec3 target = vec3(1, 0, 0);
 	float Alpha = 0;
 	
@@ -218,8 +240,15 @@ void main() {
 		// then resample color and composite into ray
 		float a = Sample(Data(x));// Проба
 		a = a / 255.0; // / correction;
+		
+		vec3 sampleColor = colorRamp(a);
+		
 		if(a > treshold){
-			C = lerp(C, target, a);
+			C = lerp(C, sampleColor, a);
+			//C = lerp(C, target, a);
+			//a = 1.0;
+		}else{
+			a =0.0;
 		}
 		Alpha += a * brightness;
 		if(Alpha >= 1) break;

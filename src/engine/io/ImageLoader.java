@@ -5,6 +5,7 @@
  */
 package engine.io;
 
+import engine.math.Vector3f;
 import java.awt.Image;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
@@ -22,8 +23,10 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che3.io.DicomInputStream;
+import org.dcm4che3.util.SafeClose;
 
 /**
  *
@@ -99,6 +102,51 @@ public class ImageLoader {
         }
 
         return raster;
+    }
+    
+    public static String getSpacingBetweenSlices(File dicomFile) throws IOException{
+        Attributes a = loadDicomObject(dicomFile);
+        String refSopiuid = a.getString(Tag.SpacingBetweenSlices);
+        return refSopiuid;
+    }
+    
+    public static String getPixelSpacing(File dicomFile) throws IOException{
+        Attributes a = loadDicomObject(dicomFile);
+        String refSopiuid = a.getString(Tag.PixelSpacing);
+        return refSopiuid;
+    }
+    
+    public static String getImagePositionPatient(File dicomFile) throws IOException{
+        Attributes a = loadDicomObject(dicomFile);
+        String refSopiuid = a.getString(Tag.ImagePositionPatient);
+        return refSopiuid;
+    }
+    
+    public static String getImagePositionPatient(File dicomFile, int i) throws IOException{
+        Attributes a = loadDicomObject(dicomFile);
+        String refSopiuid = a.getString(Tag.ImagePositionPatient, i);
+        return refSopiuid;
+    }
+    
+    public static Vector3f getImagePositionPatientVector(File dicomFile) throws IOException{
+        Attributes a = loadDicomObject(dicomFile);
+        
+        Vector3f result = new Vector3f (Float.parseFloat(a.getString(Tag.ImagePositionPatient, 0)),
+                                        Float.parseFloat(a.getString(Tag.ImagePositionPatient, 1)),
+                                        Float.parseFloat(a.getString(Tag.ImagePositionPatient, 2)));
+        
+        return result;
+    }
+    
+    private static Attributes loadDicomObject(File f) throws IOException {
+        if (f == null)
+            return null;
+        DicomInputStream dis = new DicomInputStream(f);
+        try {
+            return dis.readDataset(-1, -1);
+        } finally {
+            SafeClose.close(dis);
+        }
     }
 }
 

@@ -18,7 +18,7 @@ import org.lwjgl.glfw.GLFW;
  * @author Timur
  */
 public class UISlider extends UIComponent{
-    private float value;
+    private float value = 0.0f;
     private boolean grabbed;
     public static final int MARKER_SIZE = 25;
     public static final int LINE_THICKNESS = 10;

@@ -7,6 +7,9 @@ package xrayinspector;
 
 import engine.graphics.*;
 import static engine.io.ImageLoader.createRasterFromDICOMFile;
+import static engine.io.ImageLoader.getImagePositionPatientVector;
+import static engine.io.ImageLoader.getSpacingBetweenSlices;
+import static engine.io.ImageLoader.getPixelSpacing;
 import engine.io.Input;
 import engine.io.Window;
 import engine.math.*;
@@ -51,6 +54,10 @@ public class Main implements Runnable {
     private File[] files;
     private Raster[] DCMrasters;
     int[][] colors;
+    
+    float spacingBetweenSlices;
+    float pixelSpacing;
+    float shift;
     
     private float brightness;
     private float treshold;
@@ -176,7 +183,7 @@ public class Main implements Runnable {
         
         textField = new UITextField(105, 32, "");
         UIConstraints constraints3 = new UIConstraints();
-        constraints3.setX(new PixelConstraint(175, Constraint.BORDER_RIGHT));
+        constraints3.setX(new PixelConstraint(250, Constraint.BORDER_RIGHT));
         constraints3.setY(new PixelConstraint(275, Constraint.BORDER_TOP));
         constraints3.setWidth(new RelativeConstraint(0.05f));
         constraints3.setHeight(new RelativeConstraint(0.05f));
@@ -269,9 +276,14 @@ public class Main implements Runnable {
     }
     
     private void uiButtonActionPerformed(java.awt.event.ActionEvent evt){
+        float widthInMm = DCMrasters[0].getWidth() * this.pixelSpacing;
+        float heightInMm = DCMrasters[0].getHeight()* this.pixelSpacing;
+        double volume = volumeInVoxels() * (this.shift * widthInMm * heightInMm) / 1000.0f;
+        
+        //double volume = volume() * (this.spacingBetweenSlices * this.pixelSpacing * this.pixelSpacing) / 1000.0f;
         DecimalFormat decimalFormat = new DecimalFormat("#0.000");
-        String numberAsString = decimalFormat.format(volume());
-        this.textField.setText("Volume is: " + numberAsString);
+        String numberAsString = decimalFormat.format(volume);
+        this.textField.setText("Volume is: " + numberAsString + "cm");
     }
     
     private void uiButtonOpenFilesActionPerformed(java.awt.event.ActionEvent evt){
@@ -295,7 +307,7 @@ public class Main implements Runnable {
     }
     
     public int loadFiles(){
-        JFileChooser fileChooser = new JFileChooser("C:\\dicom files");
+        JFileChooser fileChooser = new JFileChooser("E:\\XRAYshots\\CPTAC-LSCC\\C3N-01194\\01-26-2000-PET WB LOW BMI-26638");
         fileChooser.setMultiSelectionEnabled(true);
         FileNameExtensionFilter filter = new FileNameExtensionFilter("dcm", "jpg", "png", "jpeg", "gif", "dcm");
         fileChooser.setFileFilter(filter);
@@ -307,6 +319,13 @@ public class Main implements Runnable {
         } else if (selected == JFileChooser.CANCEL_OPTION) {
             return -1;
         }
+        
+        try{
+            System.out.println(getSpacingBetweenSlices(files[0]));
+            this.spacingBetweenSlices = Float.parseFloat(getSpacingBetweenSlices(files[0]));
+            this.pixelSpacing = Float.parseFloat(getPixelSpacing(files[0]));
+            this.shift = Vector3f.length(Vector3f.subtract(getImagePositionPatientVector(files[0]), getImagePositionPatientVector(files[files.length-1])));
+        }catch(Exception e){}
         
         JProgressBar pbar;
         // initialize Progress Bar
@@ -345,7 +364,7 @@ public class Main implements Runnable {
         return 0;
     }
     
-    public float volume(){
+    public float volumeInVoxels(){
         int temp = (int)(treshold * 255);
         if (DCMrasters != null) {
             float volume = 

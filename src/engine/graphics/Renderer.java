@@ -40,7 +40,7 @@ public class Renderer {
     
     private int ssbo;
     
-    private int sampleResolution = 100;
+    private int sampleResolution = 250;
     private int dataWidth;
     private int dataHeight;
     private int dataAmount;

@@ -43,7 +43,7 @@ public class UIConstraints {
     }
     
     public void update(int windowWidth, int windowHeight){
-        if (this.windowWidth != windowWidth && this.windowHeight != windowHeight) {
+        if (this.windowWidth != windowWidth || this.windowHeight != windowHeight) {
             this.windowWidth = windowWidth;
             this.windowHeight = windowHeight;
             stateChanged = true;

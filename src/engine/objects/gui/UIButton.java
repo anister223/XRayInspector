@@ -29,7 +29,7 @@ public class UIButton extends UIComponent{
         super.WIDTH = width;
         super.HEIGHT = height;
         super.color = color;
-        this.font = new StbTtFontResource(new File("C:\\Windows\\Fonts\\times.ttf"), 24);
+        this.font = new StbTtFontResource(new File("resources/fonts/Roboto-Regular.ttf"), 24);
     }
     
     public void setText(String text){

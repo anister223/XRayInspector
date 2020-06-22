@@ -250,7 +250,7 @@ void main() {
 		}else{
 			a =0.0;
 		}
-		Alpha += a * brightness;
+		Alpha += a;// * brightness;
 		if(Alpha >= 1) break;
 		
 		x += modulation; // Прирощение координаты пробы

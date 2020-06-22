@@ -25,7 +25,7 @@ public class UITextField extends UIComponent{
         this.WIDTH = width;
         this.HEIGHT = height;
         this.text = text;
-        font = new StbTtFontResource(new File("C:\\Windows\\Fonts\\times.ttf"), 24);
+        font = new StbTtFontResource(new File("resources/fonts/Roboto-Regular.ttf"), 24);
     }
     
     public void setText(String text){

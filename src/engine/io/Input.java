@@ -30,7 +30,8 @@ public class Input {
     public Input(){
         keyboard = new GLFWKeyCallback(){
             public void invoke(long window, int key, int scancode, int action, int mods){
-                keys[key] = (action != GLFW.GLFW_RELEASE);
+                if (key >= 0 && key < GLFW.GLFW_KEY_LAST)
+                    keys[key] = (action != GLFW.GLFW_RELEASE);
             }
         };
         mouseMove = new GLFWCursorPosCallback(){
@@ -76,6 +77,7 @@ public class Input {
         keyboard.free();
         mouseMove.free();
         mouseButtons.free();
+        mouseScroll.free();
     }
 
     /**

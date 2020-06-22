@@ -23,6 +23,7 @@ import java.text.DecimalFormat;
 import java.util.stream.IntStream;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.lwjgl.glfw.GLFW;
@@ -38,12 +39,13 @@ public class Main implements Runnable {
     public Camera camera = new Camera(new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f));
     public Renderer renderer;
     public Shader shader, guiShader;
-    public final int WIDTH = 1280, HEIGHT = 720;
+    public final int WIDTH = 800, HEIGHT = 600;
     
     //GUI
     public Layout layout;
     private UIBlock block;
     private UITextField textField;
+    private UITextField textField2;
     private UIButton buttonOpenFiles;
     private UIButton button;
     private UISlider slider;
@@ -166,6 +168,7 @@ public class Main implements Runnable {
         layout.Add(button, constraints);
         
         slider = new UISlider();
+        slider.setMin(1.0f / 255);
         UIConstraints constraints2 = new UIConstraints();
         constraints2.setX(new RelativeConstraint(0.875f));
         constraints2.setY(new PixelConstraint(150, Constraint.BORDER_TOP));
@@ -173,13 +176,21 @@ public class Main implements Runnable {
         constraints2.setHeight(new RelativeConstraint(0.01f));
         layout.Add(slider, constraints2);
         
+        textField2 = new UITextField(105, 32, String.valueOf(slider.getMin()));
+        UIConstraints constraints8 = new UIConstraints();
+        constraints8.setX(new RelativeConstraint(0.875f));
+        constraints8.setY(new PixelConstraint(175, Constraint.BORDER_TOP));
+        constraints8.setWidth(new RelativeConstraint(0.05f));
+        constraints8.setHeight(new RelativeConstraint(0.05f));
+        layout.Add(textField2, constraints8);
+        
         sliderBrightness = new UISlider();
         UIConstraints constraints7 = new UIConstraints();
         constraints7.setX(new RelativeConstraint(0.875f));
         constraints7.setY(new PixelConstraint(100, Constraint.BORDER_TOP));
         constraints7.setWidth(new RelativeConstraint(0.175f));
         constraints7.setHeight(new RelativeConstraint(0.01f));
-        layout.Add(sliderBrightness, constraints7);
+        //layout.Add(sliderBrightness, constraints7);
         
         textField = new UITextField(105, 32, "");
         UIConstraints constraints3 = new UIConstraints();
@@ -276,6 +287,9 @@ public class Main implements Runnable {
     }
     
     private void uiButtonActionPerformed(java.awt.event.ActionEvent evt){
+        if (DCMrasters == null) {
+            return;
+        }
         float widthInMm = DCMrasters[0].getWidth() * this.pixelSpacing;
         float heightInMm = DCMrasters[0].getHeight()* this.pixelSpacing;
         double volume = volumeInVoxels() * (this.shift * widthInMm * heightInMm) / 1000.0f;
@@ -294,6 +308,7 @@ public class Main implements Runnable {
     
     private void uiSliderActionPerformed(java.awt.event.ActionEvent evt){
         this.treshold = slider.getValue();
+        this.textField2.setText(String.valueOf(slider.getValue()));
         renderer.setTreshold(this.treshold);
     }
     
@@ -309,7 +324,7 @@ public class Main implements Runnable {
     public int loadFiles(){
         JFileChooser fileChooser = new JFileChooser("E:\\XRAYshots\\CPTAC-LSCC\\C3N-01194\\01-26-2000-PET WB LOW BMI-26638");
         fileChooser.setMultiSelectionEnabled(true);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("dcm", "jpg", "png", "jpeg", "gif", "dcm");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("DICOM files", "dcm");
         fileChooser.setFileFilter(filter);
         int selected = fileChooser.showOpenDialog(null);
         
@@ -325,7 +340,14 @@ public class Main implements Runnable {
             this.spacingBetweenSlices = Float.parseFloat(getSpacingBetweenSlices(files[0]));
             this.pixelSpacing = Float.parseFloat(getPixelSpacing(files[0]));
             this.shift = Vector3f.length(Vector3f.subtract(getImagePositionPatientVector(files[0]), getImagePositionPatientVector(files[files.length-1])));
-        }catch(Exception e){}
+        }catch(Exception e){
+            JFrame f = new JFrame();
+            f.setTitle("Ошибка");
+            JOptionPane.showMessageDialog(f, e.getMessage());
+            f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            f.dispose();
+            return -1;
+        }
         
         JProgressBar pbar;
         // initialize Progress Bar
@@ -335,8 +357,9 @@ public class Main implements Runnable {
         // add to JPanel
         //add(pbar);
         
-        JFrame frame = new JFrame("Progress Bar Example");
+        JFrame frame = new JFrame("Загрузка файлов");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setUndecorated(true);
         frame.setContentPane(pbar);
         frame.pack();
         frame.setLocationRelativeTo(null);
@@ -347,15 +370,26 @@ public class Main implements Runnable {
             DCMrasters[i] = createRasterFromDICOMFile(files[i]);
             pbar.setValue(i);
         }
-        frame.setVisible(false);
-        frame.dispose();
         
         int size = DCMrasters[0].getWidth() * DCMrasters[0].getHeight();
         colors = new int[files.length][size];  //Использовать байты??
         for (int i = 0; i < files.length; i++) {
-            //if (size != DCMrasters[i].getWidth() * DCMrasters[i].getHeight()) throw new Exception("Изображения имеют разный размер!");  //!!!
+            if (size != DCMrasters[i].getWidth() * DCMrasters[i].getHeight()){
+                JFrame f = new JFrame();
+                f.setTitle("Ошибка");
+                JOptionPane.showMessageDialog(f, "Изображения должны быть одного размера!");
+                f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                f.dispose();
+                frame.setVisible(false);
+                frame.dispose();
+                return -1;
+            }
             DCMrasters[i].getPixels(0, 0, DCMrasters[i].getWidth(), DCMrasters[i].getHeight(), colors[i]);
+            pbar.setValue(i);
         }
+        
+        frame.setVisible(false);
+        frame.dispose();
         
         renderer.setDataWidth(DCMrasters[0].getWidth());
         renderer.setDataHeight(DCMrasters[0].getHeight());
@@ -366,23 +400,20 @@ public class Main implements Runnable {
     
     public float volumeInVoxels(){
         int temp = (int)(treshold * 255);
-        if (DCMrasters != null) {
-            float volume = 
-            IntStream.range(0, DCMrasters.length)
-            .parallel()
-            .mapToLong(r -> IntStream.range(0, DCMrasters[r].getHeight())
-                    .parallel()
-                    .mapToLong(y -> IntStream.range(0, DCMrasters[r].getWidth())
-                            .parallel()
-                            .filter(x -> DCMrasters[r].getSample(x, y, 0) >= temp)
-                            .count())
-                    .sum())
-            .sum();
-            
-            volume /= DCMrasters.length * DCMrasters[0].getHeight() * DCMrasters[0].getWidth();
-            
-            return volume;
-        }
-        return 0;
+        float volume = 
+        IntStream.range(0, DCMrasters.length)
+        .parallel()
+        .mapToLong(r -> IntStream.range(0, DCMrasters[r].getHeight())
+                .parallel()
+                .mapToLong(y -> IntStream.range(0, DCMrasters[r].getWidth())
+                        .parallel()
+                        .filter(x -> DCMrasters[r].getSample(x, y, 0) >= temp)
+                        .count())
+                .sum())
+        .sum();
+
+        volume /= DCMrasters.length * DCMrasters[0].getHeight() * DCMrasters[0].getWidth();
+
+        return volume;
     }
 }

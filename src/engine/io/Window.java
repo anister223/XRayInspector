@@ -42,10 +42,10 @@ public class Window {
     }
     
     public void create() {
-        if(!GLFW.glfwInit()){
-            System.err.println("ERROR: GLFW wasn't initializied");
-            return;
-        }
+        // Initialize GLFW. Most GLFW functions will not work before doing this.
+        if(!GLFW.glfwInit())
+            throw new IllegalStateException("Unable to initialize GLFW");
+        
         input = new Input();
         window = GLFW.glfwCreateWindow(width, height, title, 0,0);
         
@@ -54,17 +54,31 @@ public class Window {
             return;
         }
         
+        // Get the resolution of the primary monitor
         GLFWVidMode videoMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+        // Center the window
         GLFW.glfwSetWindowPos(window, (videoMode.width() - width) / 2, (videoMode.height() - height) / 2);
+        
+        // Make the OpenGL context current
         GLFW.glfwMakeContextCurrent(window);
-        GL.createCapabilities();
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
         
-        createCallbacks();
+        // Enable v-sync
+        GLFW.glfwSwapInterval(1);
         
+        // Make the window visible
         GLFW.glfwShowWindow(window);
         
-        GLFW.glfwSwapInterval(1);
+        // This line is critical for LWJGL's interoperation with GLFW's
+        // OpenGL context, or any context that is managed externally.
+        // LWJGL detects the context that is current in the current thread,
+        // creates the GLCapabilities instance and makes the OpenGL
+        // bindings available for use.
+        GL.createCapabilities();
+        
+        // Set the clear color
+        GL11.glClearColor(background.getX(),background.getY(),background.getZ(), 1.0f);
+        
+        createCallbacks();
         
         time = System.currentTimeMillis();
     }
@@ -92,12 +106,14 @@ public class Window {
             projection = Matrix4f.orthoProjection((float)width / (float) height, 0.1f, 3.5f);
             isResized = false;
         }
-        //GL11.glViewport(0, 0, width, height);
-        GL11.glClearColor(background.getX(),background.getY(),background.getZ(), 1.0f);
-        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
         
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT); // clear the framebuffer
+        
+        // Poll for window events. The key callback above will only be
+        // invoked during this call.
         GLFW.glfwPollEvents();
-        // Window display
+        
+        // Frames per second counter
         frames++;
         if(System.currentTimeMillis() > time + 1000){
             GLFW.glfwSetWindowTitle(window, title + "| FPS: " + frames);
@@ -107,7 +123,7 @@ public class Window {
     }
     
     public void swapBuffers(){
-        GLFW.glfwSwapBuffers(window);
+        GLFW.glfwSwapBuffers(window); // swap the color buffers
     }
     
     public boolean shouldClose(){
@@ -119,11 +135,16 @@ public class Window {
     }
     
     public void destroy(){
-        input.destroy();
-        sizeCallback.free();
         GLFW.glfwWindowShouldClose(window);
+        input.destroy();
+        
+        // Free the window callbacks and destroy the window
+        sizeCallback.free();
         GLFW.glfwDestroyWindow(window);
+        
+        // Terminate GLFW and free the error callback
         GLFW.glfwTerminate();
+        //GLFW.glfwSetErrorCallback(null).free();
     }
     
     public void setBackgroundColor(float r, float g, float b){

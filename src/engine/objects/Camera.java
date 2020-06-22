@@ -61,8 +61,8 @@ public class Camera {
         
         if(Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_MIDDLE)){
             isModified = true;
-            verticalAngle -= dy * mouseSensitivity;
-            horizontalAngle += dx * mouseSensitivity;
+            verticalAngle += dy * mouseSensitivity;
+            horizontalAngle -= dx * mouseSensitivity;
         } else{
             isModified = false;
         }

@@ -9,10 +9,6 @@ package engine.objects.gui;
  *
  * @author Timur
  */
-import engine.io.IOUtil;
-import java.awt.BorderLayout;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import static org.lwjgl.opengl.GL11.GL_ALPHA;
 import static org.lwjgl.opengl.GL11.GL_LINEAR;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
@@ -22,17 +18,10 @@ import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
  
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.WindowConstants;
  
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -41,7 +30,6 @@ import org.lwjgl.stb.STBTTBakedChar;
 import org.lwjgl.stb.STBTTFontinfo;
 import org.lwjgl.stb.STBTruetype;
 import org.lwjgl.system.MemoryStack;
-import sun.misc.IOUtils;
  
 public class StbTtFontResource {
      

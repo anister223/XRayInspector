@@ -59,7 +59,7 @@ public class Camera {
         float dx = (float) (newMouseX - oldMouseX);
         float dy = (float) (newMouseY - oldMouseY);
         
-        if(Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_MIDDLE)){
+        if(Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_LEFT)){
             isModified = true;
             verticalAngle += dy * mouseSensitivity;
             horizontalAngle -= dx * mouseSensitivity;

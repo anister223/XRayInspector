@@ -25,6 +25,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
+import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.lwjgl.glfw.GLFW;
 
@@ -39,7 +40,7 @@ public class Main implements Runnable {
     public Camera camera = new Camera(new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f));
     public Renderer renderer;
     public Shader shader, guiShader;
-    public final int WIDTH = 800, HEIGHT = 600;
+    public final int WIDTH = 1280, HEIGHT = 720;
     
     //GUI
     public Layout layout;
@@ -266,7 +267,8 @@ public class Main implements Runnable {
     private void update(){
         window.update();
         renderer.update();
-        camera.update(object);
+        if(!(Input.getMouseX() > window.getWidth() * (1 - 0.3f)))   //temp
+            camera.update(object);
         layout.update();
         Input.buttonsUpRefresh();
     }
@@ -293,7 +295,7 @@ public class Main implements Runnable {
         float widthInMm = DCMrasters[0].getWidth() * this.pixelSpacing;
         float heightInMm = DCMrasters[0].getHeight()* this.pixelSpacing;
         double volume = volumeInVoxels() * (this.shift * widthInMm * heightInMm) / 1000.0f;
-        
+                
         //double volume = volume() * (this.spacingBetweenSlices * this.pixelSpacing * this.pixelSpacing) / 1000.0f;
         DecimalFormat decimalFormat = new DecimalFormat("#0.000");
         String numberAsString = decimalFormat.format(volume);
@@ -322,7 +324,25 @@ public class Main implements Runnable {
     }
     
     public int loadFiles(){
+        // Локализация компонентов окна JFileChooser
+        UIManager.put(
+                 "FileChooser.saveButtonText", "Сохранить");
+        UIManager.put(
+                 "FileChooser.cancelButtonText", "Отмена");
+        UIManager.put(
+                 "FileChooser.fileNameLabelText", "Наименование файла");
+        UIManager.put(
+                 "FileChooser.filesOfTypeLabelText", "Типы файлов");
+        UIManager.put(
+                 "FileChooser.lookInLabelText", "Директория");
+        UIManager.put(
+                 "FileChooser.saveInLabelText", "Сохранить в директории");
+        UIManager.put(
+                 "FileChooser.folderNameLabelText", "Путь директории");
+        
         JFileChooser fileChooser = new JFileChooser("E:\\XRAYshots\\CPTAC-LSCC\\C3N-01194\\01-26-2000-PET WB LOW BMI-26638");
+        fileChooser.setApproveButtonText("Выбрать");
+        fileChooser.setDialogTitle("Открыть");
         fileChooser.setMultiSelectionEnabled(true);
         FileNameExtensionFilter filter = new FileNameExtensionFilter("DICOM files", "dcm");
         fileChooser.setFileFilter(filter);
@@ -337,13 +357,14 @@ public class Main implements Runnable {
         
         try{
             System.out.println(getSpacingBetweenSlices(files[0]));
-            this.spacingBetweenSlices = Float.parseFloat(getSpacingBetweenSlices(files[0]));
+            //this.spacingBetweenSlices = Float.parseFloat(getSpacingBetweenSlices(files[0]));
             this.pixelSpacing = Float.parseFloat(getPixelSpacing(files[0]));
             this.shift = Vector3f.length(Vector3f.subtract(getImagePositionPatientVector(files[0]), getImagePositionPatientVector(files[files.length-1])));
         }catch(Exception e){
             JFrame f = new JFrame();
+            f.setAlwaysOnTop(true);
             f.setTitle("Ошибка");
-            JOptionPane.showMessageDialog(f, e.getMessage());
+            JOptionPane.showMessageDialog(f, "Загружен неверный формат изображения (необходим .dcm)\nили в одном из загруженых файлах отсутствует обязательный DICOM атрибут!\nВычисление объема невозможно.");
             f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             f.dispose();
             return -1;
@@ -376,6 +397,7 @@ public class Main implements Runnable {
         for (int i = 0; i < files.length; i++) {
             if (size != DCMrasters[i].getWidth() * DCMrasters[i].getHeight()){
                 JFrame f = new JFrame();
+                f.setAlwaysOnTop(true);
                 f.setTitle("Ошибка");
                 JOptionPane.showMessageDialog(f, "Изображения должны быть одного размера!");
                 f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -394,6 +416,12 @@ public class Main implements Runnable {
         renderer.setDataWidth(DCMrasters[0].getWidth());
         renderer.setDataHeight(DCMrasters[0].getHeight());
         renderer.setDataAmount(DCMrasters.length);
+        
+        float widthInMm = DCMrasters[0].getWidth() * this.pixelSpacing;
+        float heightInMm = DCMrasters[0].getHeight()* this.pixelSpacing;
+        
+        renderer.setCorrection(this.shift / ((widthInMm + heightInMm) / 2));
+        object.setScale(new Vector3f(1.0f, 1.0f, this.shift / ((widthInMm + heightInMm) / 2)));
         
         return 0;
     }

@@ -124,8 +124,9 @@ vec3 Data(vec3 v) {
 
 	vec3 resolution = vec3(dataWidth, dataHeight, dataAmount);
 	vec3 offset = vec3(aabb2.x, aabb2.y, aabb2.z);
-	
-	result = (v + offset) * resolution;
+	result = v + offset;
+	result.z = result.z / aabb2.z / 2;	//correction
+	result = result * resolution;
 	return result;
 }
 

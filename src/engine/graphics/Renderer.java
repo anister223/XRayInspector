@@ -5,18 +5,13 @@
  */
 package engine.graphics;
 
-import static engine.io.ImageLoader.*;
 import engine.io.Window;
 import engine.math.Matrix4f;
 import engine.math.Vector3f;
 import engine.objects.Camera;
 import engine.objects.MeshObject;
 import engine.objects.gui.StbTtFontResource;
-import java.awt.event.ActionListener;
-import java.awt.image.Raster;
-import java.io.File;
 import java.nio.FloatBuffer;
-import java.util.stream.IntStream;
 import org.lwjgl.opengl.GL11;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import org.lwjgl.opengl.GL15;
@@ -48,6 +43,8 @@ public class Renderer {
     private float brightness;
     private float treshold;
     
+    private float correction;
+    
     //bounding box
     Vector3f aabb1 = new Vector3f(-0.5f, -0.5f, -0.5f);
     Vector3f aabb2 = new Vector3f(0.5f,  0.5f,  0.5f);
@@ -57,6 +54,12 @@ public class Renderer {
         this.shader = shader;
         this.guiShader = guiShader;
         //this.font = new StbTtFontResource(new File("C:\\Windows\\Fonts\\times.ttf"), 24);
+    }
+    
+    public void setCorrection(float correction){
+        this.correction = correction;
+        this.aabb1 = new Vector3f(-0.5f, -0.5f, -(correction / 2));
+        this.aabb2 = new Vector3f(0.5f,  0.5f,  correction / 2);
     }
     
     private void init(){
@@ -185,7 +188,7 @@ public class Renderer {
             GL11.glBindTexture(GL_TEXTURE_2D, font.getGlName());
             
             GL11.glBegin(GL11.GL_TRIANGLES);
-            GL11.glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
+            GL11.glColor4f(0.35f, 0.35f, 0.35f, 1.0f);
 
             int firstCP = StbTtFontResource.BAKE_FONT_FIRST_CHAR;
             int lastCP = StbTtFontResource.BAKE_FONT_FIRST_CHAR + StbTtFontResource.GLYPH_COUNT - 1;

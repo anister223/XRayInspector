@@ -18,7 +18,7 @@ import org.lwjgl.glfw.GLFW;
  * @author Timur
  */
 public class UISlider extends UIComponent{
-    private float value = 0.0f;
+    private float value = 1.0f;
     private float min, max;
     private boolean grabbed;
     public static final int MARKER_SIZE = 25;
@@ -43,6 +43,16 @@ public class UISlider extends UIComponent{
     
     public void setMin(float min){
         this.min = min;
+        //if(value < min) this.value = min;
+    }
+    
+    public void setMax(float max){
+        this.max = max;
+        //if(value > max) this.value = max;
+    }
+    
+    public void setValue(float value){
+        this.value = value;
     }
     
     public float getValue(){
@@ -53,7 +63,7 @@ public class UISlider extends UIComponent{
     
     @Override
     public void create(UIConstraints constraints){
-        value = -constraints.getWidth() / 2;
+        value = constraints.getWidth() / 2;
         update(constraints);
     }
 
@@ -129,6 +139,10 @@ public class UISlider extends UIComponent{
         for (ActionListener listener:listeners){
             listener.actionPerformed(event);
         }
+    }
+
+    public float getMax() {
+        return this.max;
     }
 
     public float getMin() {

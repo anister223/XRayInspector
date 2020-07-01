@@ -47,12 +47,32 @@ public class RawModel {
         GL20.glVertexAttribPointer(0, 2, GL11.GL_FLOAT, false, 0, 0);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0); //unbind buffer
         
+        FloatBuffer textureBuffer = MemoryUtil.memAllocFloat(vertices.length * 2);
+        float[] textureData = new float[vertices.length *2];
+        for (int i = 0; i < vertices.length; i++) {
+            textureData[i*2] = vertices[i].getTextureCoord().getX();
+            textureData[i*2 + 1] = vertices[i].getTextureCoord().getY();
+        }
+        textureBuffer.put(textureData).flip(); //flip потомучто OpenGL так работает
+        
+        tbo = storeData(textureBuffer, 1, 2);
+        
         IntBuffer indicesBuffer = MemoryUtil.memAllocInt(indices.length);
         indicesBuffer.put(indices).flip();
         ibo = GL15.glGenBuffers();
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, ibo);
         GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL15.GL_STATIC_DRAW);
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0); //unbind buffer
+        
+    }
+    
+    public int storeData(FloatBuffer buffer, int index, int size){
+        int bufferID = GL15.glGenBuffers();
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferID); //bind buffer
+        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+        GL20.glVertexAttribPointer(index, size, GL11.GL_FLOAT, false, 0, 0);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0); //unbind buffer
+        return bufferID;
     }
 
     public void destroy(){

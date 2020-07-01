@@ -11,9 +11,20 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+uniform float yClip;
+uniform float zClip;
+uniform float xClip;
+
 void main(){
+	vec3 pos = position;
+	if(pos.y > yClip)
+		pos.y = yClip;
+	if(pos.z > zClip)
+		pos.z = zClip;
+	if(pos.x > xClip)
+		pos.x = xClip;
 	//ortho
-    gl_Position = projection * view * model * vec4(position, 1.0);
+    gl_Position = projection * view * model * vec4(pos, 1.0);
 	//gl_Position = inverse(projection * view * model) * gl_Position;
 	//gl_Position = projection * view * model * gl_Position;
 	

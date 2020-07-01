@@ -30,6 +30,10 @@ public class UICheckBox extends UIComponent{
         super.color = Color3f.WHITE;
     }
     
+    public boolean getState(){
+        return this.state;
+    }
+    
     @Override
     public void create(UIConstraints constraints){
         update(constraints);
@@ -78,7 +82,7 @@ public class UICheckBox extends UIComponent{
         }
     }
     
-    public void addListener(ActionListener listener){
+    public void addActionListener(ActionListener listener){
         this.listeners.add(listener);
     }
 }

@@ -63,25 +63,25 @@ public class Camera {
             isModified = true;
             verticalAngle += dy * mouseSensitivity;
             horizontalAngle -= dx * mouseSensitivity;
+            /*
+            if(Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_MIDDLE)){
+                if(distance > 0){
+                    distance += dy * mouseSensitivity;
+                } else distance = 0.1f;
+            }
+            */
+            float horizontalDistance = (float) (distance * Math.cos(Math.toRadians(verticalAngle)));
+            float verticalDistance = (float) (distance * Math.sin(Math.toRadians(verticalAngle)));
+
+            float xOffset = (float) (horizontalDistance * Math.sin(Math.toRadians(-horizontalAngle)));
+            float zOffset = (float) (horizontalDistance * Math.cos(Math.toRadians(-horizontalAngle)));
+
+            position.set(object.getPosition().getX() + xOffset, object.getPosition().getY() - verticalDistance, object.getPosition().getZ() + zOffset);
+
+            rotation.set(verticalAngle, -horizontalAngle, 0);
         } else{
             isModified = false;
         }
-        /*
-        if(Input.isButtonDown(GLFW.GLFW_MOUSE_BUTTON_MIDDLE)){
-            if(distance > 0){
-                distance += dy * mouseSensitivity;
-            } else distance = 0.1f;
-        }
-        */
-        float horizontalDistance = (float) (distance * Math.cos(Math.toRadians(verticalAngle)));
-        float verticalDistance = (float) (distance * Math.sin(Math.toRadians(verticalAngle)));
-        
-        float xOffset = (float) (horizontalDistance * Math.sin(Math.toRadians(-horizontalAngle)));
-        float zOffset = (float) (horizontalDistance * Math.cos(Math.toRadians(-horizontalAngle)));
-        
-        position.set(object.getPosition().getX() + xOffset, object.getPosition().getY() - verticalDistance, object.getPosition().getZ() + zOffset);
-        
-        rotation.set(verticalAngle, -horizontalAngle, 0);
         
         oldMouseX = newMouseX;
         oldMouseY = newMouseY;

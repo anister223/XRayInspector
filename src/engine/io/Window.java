@@ -9,6 +9,7 @@ import engine.math.Matrix4f;
 import engine.math.Vector3f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.glfw.GLFWWindowMaximizeCallback;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
@@ -24,6 +25,7 @@ public class Window {
     public Input input;
     private Vector3f background = new Vector3f(0,0,0);
     private GLFWWindowSizeCallback sizeCallback;
+    private GLFWWindowMaximizeCallback maxCallback;
     private boolean isResized;
     private Matrix4f projection;
     
@@ -87,8 +89,18 @@ public class Window {
         sizeCallback = new GLFWWindowSizeCallback() {
             @Override
             public void invoke(long window, int w, int h) {
-                width = w;
-                height = h;
+                if (w < 800) width = 800;
+                else width = w;
+                if (h < 600) height = 600;
+                else height = h;
+                GLFW.glfwSetWindowSize(window, width, height);
+                isResized = true;
+            }
+        };
+        
+        maxCallback = new GLFWWindowMaximizeCallback() {
+            @Override
+            public void invoke(long window, boolean maximized) {
                 isResized = true;
             }
         };
@@ -98,6 +110,7 @@ public class Window {
         GLFW.glfwSetMouseButtonCallback(window, input.getMouseButtonsCallback());
         GLFW.glfwSetScrollCallback(window, input.getMouseScrollCallback());
         GLFW.glfwSetWindowSizeCallback(window, sizeCallback);
+        GLFW.glfwSetWindowMaximizeCallback(window, maxCallback);
     }
     
     public void update(){
@@ -112,6 +125,7 @@ public class Window {
         // Poll for window events. The key callback above will only be
         // invoked during this call.
         GLFW.glfwPollEvents();
+        //GLFW.glfwWaitEvents();
         
         // Frames per second counter
         frames++;
@@ -140,6 +154,7 @@ public class Window {
         
         // Free the window callbacks and destroy the window
         sizeCallback.free();
+        maxCallback.free();
         GLFW.glfwDestroyWindow(window);
         
         // Terminate GLFW and free the error callback

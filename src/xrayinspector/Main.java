@@ -137,7 +137,7 @@ public class Main implements Runnable {
     public void init(){
         // Инициализация
         window = new Window(WIDTH, HEIGHT, "XRayInspector");
-        shader = new Shader("/shaders/mainVertex.glsl", "/shaders/rayCastingVolumeFragment_opt.glsl");
+        shader = new Shader("/shaders/mainVertex.glsl", "/shaders/rayCastingVolumeFragment_Shaded.glsl");
         guiShader = new Shader("/shaders/guiVertexShader.txt", "/shaders/guiFragmentShader.txt");
         fboShader = new Shader("/shaders/fboVertex.glsl", "/shaders/fboFragment.glsl");
         renderer = new Renderer(window, shader, guiShader, fboShader);
@@ -482,7 +482,8 @@ public class Main implements Runnable {
             pbar.setValue(i);
         }
         pbar.setMaximum(dataWidth);
-        // Создание дополнительного массива ориентированого на ось X
+        // Создание дублирующих данных ориентированых на ось X
+        // Которые занимают старший байт в том же массиве short
         int size2 = files.length * dataHeight;
         for (int z = 0; z < dataWidth; z++) {
             for (int y = 0; y < dataHeight; y++) {

@@ -130,6 +130,7 @@ public class Main implements Runnable {
     public MeshObject object = new MeshObject(new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(1.0f, 1.0f, 1.0f), mesh);
     
     public void start() {
+        int t;
         mainThread = new Thread(this, "mainThread");
         mainThread.start();
     }
